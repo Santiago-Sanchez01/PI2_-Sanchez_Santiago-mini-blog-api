@@ -19,6 +19,9 @@ router.get('/', async (req, res) => {
   }
 });
 
+
+
+
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -35,6 +38,43 @@ router.get('/:id', async (req, res) => {
     }
 
     res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Internal server error'
+    });
+  }
+});
+
+
+
+
+
+router.post('/', async (req, res) => {
+  try {
+    const { name, email, bio } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        error: 'Name is required'
+      });
+    }
+
+    if (!email || !email.trim()) {
+      return res.status(400).json({
+        error: 'Email is required'
+      });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO authors (name, email, bio)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [name.trim(), email.trim(), bio || null]
+    );
+
+    res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error(error);
 
