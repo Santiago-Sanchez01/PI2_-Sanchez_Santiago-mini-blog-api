@@ -1,4 +1,5 @@
 const express = require('express');
+const authorsRouter = require('./routes/authors.routes');
 
 const app = express();
 
@@ -9,5 +10,7 @@ app.get('/', (req, res) => {
     message: 'MiniBlog API is running'
   });
 });
+
+app.use('/authors', authorsRouter);
 
 module.exports = app;
