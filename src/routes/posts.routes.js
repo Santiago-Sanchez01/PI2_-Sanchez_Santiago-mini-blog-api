@@ -1,20 +1,17 @@
 const express = require('express');
-const pool = require('../db');
+const postsService = require('../services/posts.service');
 const validateId = require('../middlewares/validateId');
 
 const router = express.Router();
 
 
-
 // GET /posts
-// Obtiene todos los posts
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT * FROM posts ORDER BY id'
-    );
+    const posts = await postsService.getAllPosts();
 
-    res.status(200).json(result.rows);
+    res.status(200).json(posts);
+
   } catch (error) {
     console.error(error);
 
@@ -26,7 +23,6 @@ router.get('/', async (req, res) => {
 
 
 // GET /posts/author/:authorId
-// Obtiene todos los posts de un autor
 router.get('/author/:authorId', async (req, res) => {
   try {
     const { authorId } = req.params;
@@ -39,14 +35,9 @@ router.get('/author/:authorId', async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      `SELECT * FROM posts
-       WHERE author_id = $1
-       ORDER BY id`,
-      [authorId]
-    );
+    const posts = await postsService.getPostsByAuthor(authorId);
 
-    res.status(200).json(result.rows);
+    res.status(200).json(posts);
 
   } catch (error) {
     console.error(error);
@@ -59,23 +50,19 @@ router.get('/author/:authorId', async (req, res) => {
 
 
 // GET /posts/:id
-// Obtiene un post por su ID
 router.get('/:id', validateId, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await pool.query(
-      'SELECT * FROM posts WHERE id = $1',
-      [id]
-    );
+    const post = await postsService.getPostById(id);
 
-    if (result.rows.length === 0) {
+    if (!post) {
       return res.status(404).json({
         error: 'Post not found'
       });
     }
 
-    res.status(200).json(result.rows[0]);
+    res.status(200).json(post);
 
   } catch (error) {
     console.error(error);
@@ -88,7 +75,6 @@ router.get('/:id', validateId, async (req, res) => {
 
 
 // POST /posts
-// Crea un nuevo post
 router.post('/', async (req, res) => {
   try {
     const { title, content, author_id, published } = req.body;
@@ -111,22 +97,16 @@ router.post('/', async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      `INSERT INTO posts (title, content, author_id, published)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      [
-        title.trim(),
-        content.trim(),
-        author_id,
-        published ?? false
-      ]
+    const post = await postsService.createPost(
+      title.trim(),
+      content.trim(),
+      author_id,
+      published ?? false
     );
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(post);
 
   } catch (error) {
-    // PostgreSQL: foreign key violation
     if (error.code === '23503') {
       return res.status(400).json({
         error: 'Author does not exist'
@@ -143,7 +123,6 @@ router.post('/', async (req, res) => {
 
 
 // PUT /posts/:id
-// Actualiza un post existente
 router.put('/:id', validateId, async (req, res) => {
   try {
     const { id } = req.params;
@@ -167,33 +146,23 @@ router.put('/:id', validateId, async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      `UPDATE posts
-       SET title = $1,
-           content = $2,
-           author_id = $3,
-           published = $4
-       WHERE id = $5
-       RETURNING *`,
-      [
-        title.trim(),
-        content.trim(),
-        author_id,
-        published ?? false,
-        id
-      ]
+    const post = await postsService.updatePost(
+      id,
+      title.trim(),
+      content.trim(),
+      author_id,
+      published ?? false
     );
 
-    if (result.rows.length === 0) {
+    if (!post) {
       return res.status(404).json({
         error: 'Post not found'
       });
     }
 
-    res.status(200).json(result.rows[0]);
+    res.status(200).json(post);
 
   } catch (error) {
-    // PostgreSQL: foreign key violation
     if (error.code === '23503') {
       return res.status(400).json({
         error: 'Author does not exist'
@@ -210,19 +179,13 @@ router.put('/:id', validateId, async (req, res) => {
 
 
 // DELETE /posts/:id
-// Elimina un post existente
 router.delete('/:id', validateId, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await pool.query(
-      `DELETE FROM posts
-       WHERE id = $1
-       RETURNING *`,
-      [id]
-    );
+    const post = await postsService.deletePost(id);
 
-    if (result.rows.length === 0) {
+    if (!post) {
       return res.status(404).json({
         error: 'Post not found'
       });

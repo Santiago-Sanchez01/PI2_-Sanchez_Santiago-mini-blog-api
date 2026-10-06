@@ -1,20 +1,17 @@
 const express = require('express');
-const pool = require('../db');
+const authorsService = require('../services/authors.service');
 const validateId = require('../middlewares/validateId');
 
 const router = express.Router();
 
 
-
 // GET /authors
-// Obtiene todos los autores
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT * FROM authors ORDER BY id'
-    );
+    const authors = await authorsService.getAllAuthors();
 
-    res.status(200).json(result.rows);
+    res.status(200).json(authors);
+
   } catch (error) {
     console.error(error);
 
@@ -26,23 +23,20 @@ router.get('/', async (req, res) => {
 
 
 // GET /authors/:id
-// Obtiene un autor por su ID
 router.get('/:id', validateId, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await pool.query(
-      'SELECT * FROM authors WHERE id = $1',
-      [id]
-    );
+    const author = await authorsService.getAuthorById(id);
 
-    if (result.rows.length === 0) {
+    if (!author) {
       return res.status(404).json({
         error: 'Author not found'
       });
     }
 
-    res.status(200).json(result.rows[0]);
+    res.status(200).json(author);
+
   } catch (error) {
     console.error(error);
 
@@ -54,7 +48,6 @@ router.get('/:id', validateId, async (req, res) => {
 
 
 // POST /authors
-// Crea un nuevo autor
 router.post('/', async (req, res) => {
   try {
     const { name, email, bio } = req.body;
@@ -71,21 +64,15 @@ router.post('/', async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      `INSERT INTO authors (name, email, bio)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
-      [
-        name.trim(),
-        email.trim(),
-        bio || null
-      ]
+    const author = await authorsService.createAuthor(
+      name.trim(),
+      email.trim(),
+      bio || null
     );
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(author);
 
   } catch (error) {
-    // PostgreSQL: unique violation
     if (error.code === '23505') {
       return res.status(400).json({
         error: 'Email already exists'
@@ -102,7 +89,6 @@ router.post('/', async (req, res) => {
 
 
 // PUT /authors/:id
-// Actualiza un autor existente
 router.put('/:id', validateId, async (req, res) => {
   try {
     const { id } = req.params;
@@ -120,31 +106,22 @@ router.put('/:id', validateId, async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      `UPDATE authors
-       SET name = $1,
-           email = $2,
-           bio = $3
-       WHERE id = $4
-       RETURNING *`,
-      [
-        name.trim(),
-        email.trim(),
-        bio || null,
-        id
-      ]
+    const author = await authorsService.updateAuthor(
+      id,
+      name.trim(),
+      email.trim(),
+      bio || null
     );
 
-    if (result.rows.length === 0) {
+    if (!author) {
       return res.status(404).json({
         error: 'Author not found'
       });
     }
 
-    res.status(200).json(result.rows[0]);
+    res.status(200).json(author);
 
   } catch (error) {
-    // PostgreSQL: unique violation
     if (error.code === '23505') {
       return res.status(400).json({
         error: 'Email already exists'
@@ -161,19 +138,13 @@ router.put('/:id', validateId, async (req, res) => {
 
 
 // DELETE /authors/:id
-// Elimina un autor existente
 router.delete('/:id', validateId, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await pool.query(
-      `DELETE FROM authors
-       WHERE id = $1
-       RETURNING *`,
-      [id]
-    );
+    const author = await authorsService.deleteAuthor(id);
 
-    if (result.rows.length === 0) {
+    if (!author) {
       return res.status(404).json({
         error: 'Author not found'
       });
