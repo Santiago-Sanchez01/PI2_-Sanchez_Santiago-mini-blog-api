@@ -1,0 +1,405 @@
+openapi: 3.0.3
+
+info:
+  title: MiniBlog API
+  version: 1.0.0
+  description: REST API for managing authors and posts.
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+tags:
+  - name: Authors
+    description: Operations related to authors
+
+  - name: Posts
+    description: Operations related to posts
+
+paths:
+
+  /authors:
+    get:
+      tags:
+        - Authors
+      summary: Get all authors
+      responses:
+        '200':
+          description: Authors retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Author'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Authors
+      summary: Create a new author
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorInput'
+      responses:
+        '201':
+          description: Author created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+
+        '400':
+          description: Invalid data or email already exists
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  /authors/{id}:
+    get:
+      tags:
+        - Authors
+      summary: Get an author by ID
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Author retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+
+        '400':
+          description: Invalid ID
+
+        '404':
+          description: Author not found
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Authors
+      summary: Update an author
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorInput'
+      responses:
+        '200':
+          description: Author updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+
+        '400':
+          description: Invalid data, invalid ID, or email already exists
+
+        '404':
+          description: Author not found
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Authors
+      summary: Delete an author
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Author deleted successfully
+
+        '400':
+          description: Invalid ID
+
+        '404':
+          description: Author not found
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  /posts:
+    get:
+      tags:
+        - Posts
+      summary: Get all posts
+      responses:
+        '200':
+          description: Posts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Posts
+      summary: Create a new post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostInput'
+      responses:
+        '201':
+          description: Post created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+
+        '400':
+          description: Invalid data or author does not exist
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  /posts/{id}:
+    get:
+      tags:
+        - Posts
+      summary: Get a post by ID
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Post retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+
+        '400':
+          description: Invalid ID
+
+        '404':
+          description: Post not found
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Posts
+      summary: Update a post
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostInput'
+      responses:
+        '200':
+          description: Post updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+
+        '400':
+          description: Invalid data, invalid ID, or author does not exist
+
+        '404':
+          description: Post not found
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Posts
+      summary: Delete a post
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Post deleted successfully
+
+        '400':
+          description: Invalid ID
+
+        '404':
+          description: Post not found
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  /posts/author/{authorId}:
+    get:
+      tags:
+        - Posts
+      summary: Get all posts by author
+      parameters:
+        - name: authorId
+          in: path
+          required: true
+          description: Author ID
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      responses:
+        '200':
+          description: Posts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+
+        '400':
+          description: Invalid author ID
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+components:
+
+  schemas:
+
+    Author:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+
+        name:
+          type: string
+          example: Ana García
+
+        email:
+          type: string
+          format: email
+          example: ana@example.com
+
+        bio:
+          type: string
+          nullable: true
+          example: Desarrolladora full-stack apasionada por Node.js
+
+        created_at:
+          type: string
+          format: date-time
+
+
+    AuthorInput:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+          example: Laura Gomez
+
+        email:
+          type: string
+          format: email
+          example: laura@example.com
+
+        bio:
+          type: string
+          nullable: true
+          example: Desarrolladora backend
+
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+
+        title:
+          type: string
+          example: Introducción a Node.js
+
+        content:
+          type: string
+          example: Node.js es un runtime de JavaScript...
+
+        author_id:
+          type: integer
+          example: 1
+
+        published:
+          type: boolean
+          example: true
+
+        created_at:
+          type: string
+          format: date-time
+
+
+    PostInput:
+      type: object
+      required:
+        - title
+        - content
+        - author_id
+      properties:
+        title:
+          type: string
+          example: Mi nuevo post
+
+        content:
+          type: string
+          example: Este es el contenido de mi nuevo post.
+
+        author_id:
+          type: integer
+          minimum: 1
+          example: 1
+
+        published:
+          type: boolean
+          default: false
+          example: true
+
+
+  parameters:
+
+    Id:
+      name: id
+      in: path
+      required: true
+      description: Resource ID
+      schema:
+        type: integer
+        minimum: 1
+        example: 1
+
+
+  responses:
+
+    InternalServerError:
+      description: Internal server error
