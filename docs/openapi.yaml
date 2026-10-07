@@ -6,6 +6,9 @@ info:
   description: REST API for managing authors and posts.
 
 servers:
+  - url: https://pi2-sanchezsantiago-mini-blog-api-production.up.railway.app
+    description: Production server
+
   - url: http://localhost:3000
     description: Local development server
 
